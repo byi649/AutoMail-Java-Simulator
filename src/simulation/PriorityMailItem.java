@@ -1,3 +1,4 @@
+// Group 7
 package simulation;
 
 import automail.MailItem;

@@ -1,3 +1,4 @@
+// Group 7
 package simulation;
 
 import exceptions.ExcessiveDeliveryException;
@@ -18,7 +19,7 @@ import automail.MailPool;
 /**
  * This class simulates the behaviour of AutoMail
  */
-public class Simulation {
+public class  Simulation {
 	private static int NUM_ROBOTS;
 	
     /** Constant for the mail generator */
@@ -27,6 +28,7 @@ public class Simulation {
     
     private static boolean OVERDRIVE_ENABLED;
     private static boolean STATISTICS_ENABLED;
+    private static boolean FOOD_ITEMS_ENABLED;
     
     private static ArrayList<MailItem> MAIL_DELIVERED;
     private static double total_delay = 0;
@@ -37,8 +39,8 @@ public class Simulation {
     	
     	//An array list to record mails that have been delivered
         MAIL_DELIVERED = new ArrayList<MailItem>();
-                
-        
+
+
         
         /** This code section below is to save a random seed for generating mails.
          * If a program argument is entered, the first argument will be a random seed.
@@ -67,7 +69,7 @@ public class Simulation {
         /* Instantiate MailPool and Automail */
      	MailPool mailPool = new MailPool(NUM_ROBOTS);
         Automail automail = new Automail(mailPool, new ReportDelivery(), NUM_ROBOTS);
-        MailGenerator mailGenerator = new MailGenerator(MAIL_TO_CREATE, MAIL_MAX_WEIGHT, mailPool, seedMap);
+        MailGenerator mailGenerator = new MailGenerator(MAIL_TO_CREATE, MAIL_MAX_WEIGHT, FOOD_ITEMS_ENABLED, mailPool, seedMap);
         
         /** Generate all the mails */
         mailGenerator.generateAllMail();
@@ -88,6 +90,7 @@ public class Simulation {
             Clock.Tick();
         }
         printResults();
+        if(STATISTICS_ENABLED) {printStatistics(automail, mailPool);}
     }
     
     static private Properties setUpProperties() throws IOException {
@@ -102,6 +105,7 @@ public class Simulation {
     	automailProperties.setProperty("Mail_Receving_Length", "100");
     	automailProperties.setProperty("Overdrive", "false");
     	automailProperties.setProperty("Statistics", "false");
+		automailProperties.setProperty("DeliverFood", "false");
 
     	// Read properties
 		FileReader inStream = null;
@@ -136,7 +140,12 @@ public class Simulation {
 		NUM_ROBOTS = Integer.parseInt(automailProperties.getProperty("Robots"));
 		System.out.print("#Robots: "); System.out.println(NUM_ROBOTS);
 		assert(NUM_ROBOTS > 0);
-		
+		// Food items
+		FOOD_ITEMS_ENABLED = Boolean.parseBoolean(automailProperties.getProperty("DeliverFood"));
+		if (FOOD_ITEMS_ENABLED) {
+            System.out.print("Food items enabled: " + FOOD_ITEMS_ENABLED + "\n");
+        }
+
 		return automailProperties;
     }
     
@@ -171,6 +180,28 @@ public class Simulation {
     	}
         return Math.pow(Clock.Time() - deliveryItem.getArrivalTime(),penalty)*(1+Math.sqrt(priority_weight));
     }
+
+    /**Adds up the statistics from each bots and prints it out **/
+    private static void printStatistics(Automail automail, MailPool mailPool){
+    	int totalRegularItem = 0;
+    	int totalFoodItem = 0;
+    	int totalRegularItemWeight = 0;
+    	int totalFoodItemWeight = 0;
+    	int timesFoodTubeAttached = mailPool.getTimesTubeAttached();
+
+		for(int i=0; i<NUM_ROBOTS;i++) {
+			totalRegularItem += automail.robots[i].getRegularItemDelivered();
+			totalFoodItem += automail.robots[i].getFoodItemDelivered();
+			totalRegularItemWeight += automail.robots[i].getTotalRegularItemWeight();
+			totalFoodItemWeight += automail.robots[i].getTotalFoodItemWeight();
+		}
+
+		System.out.println("Regular items delivered: " + totalRegularItem);
+		System.out.println("Food items delivered: " + totalFoodItem);
+		System.out.println("Total weight of regular items: " + totalRegularItemWeight);
+		System.out.println("Total weight of food items: " + totalFoodItemWeight);
+		System.out.println("Total times food tube attached: " + timesFoodTubeAttached);
+	}
 
     public static void printResults(){
         System.out.println("T: "+Clock.Time()+" | Simulation complete!");

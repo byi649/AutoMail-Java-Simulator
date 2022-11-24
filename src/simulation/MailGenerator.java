@@ -1,9 +1,12 @@
+// Group 7
 package simulation;
 
 import java.util.*;
 
+import automail.FoodItem;
 import automail.MailItem;
 import automail.MailPool;
+import automail.RegularItem;
 
 /**
  * This class generates the mail
@@ -12,6 +15,9 @@ public class MailGenerator {
 
     public final int MAIL_TO_CREATE;
     public final int MAIL_MAX_WEIGHT;
+
+    public final boolean FOOD_ITEMS_ENABLED;
+    private static final double CHANCE_OF_FOOD_ITEM = 0.5;
     
     private int mailCreated;
 
@@ -30,7 +36,7 @@ public class MailGenerator {
      * @param mailPool where mail items go on arrival
      * @param seed random seed for generating mail
      */
-    public MailGenerator(int mailToCreate, int mailMaxWeight, MailPool mailPool, HashMap<Boolean,Integer> seed){
+    public MailGenerator(int mailToCreate, int mailMaxWeight, boolean FOOD_ITEMS_ENABLED, MailPool mailPool, HashMap<Boolean,Integer> seed){
         if(seed.containsKey(true)){
         	this.random = new Random((long) seed.get(true));
         }
@@ -40,6 +46,7 @@ public class MailGenerator {
         // Vary arriving mail by +/-20%
         MAIL_TO_CREATE = mailToCreate*4/5 + random.nextInt(mailToCreate*2/5);
         MAIL_MAX_WEIGHT = mailMaxWeight;
+        this.FOOD_ITEMS_ENABLED = FOOD_ITEMS_ENABLED;
         // System.out.println("Num Mail Items: "+MAIL_TO_CREATE);
         mailCreated = 0;
         complete = false;
@@ -61,7 +68,13 @@ public class MailGenerator {
         	(allMail.containsKey(arrivalTime) &&
         	allMail.get(arrivalTime).stream().anyMatch(e -> PriorityMailItem.class.isInstance(e))))
         {
-        	newMailItem = new MailItem(destinationFloor,arrivalTime,weight);      	
+            // Arbitrary food item to regular item ratio, as per https://piazza.com/class/kedz3bksz0f7il?cid=30
+            // Short circuit "and" to prevent changes to no-food-items simulation
+            if (FOOD_ITEMS_ENABLED && (random.nextDouble() < CHANCE_OF_FOOD_ITEM)) {
+                newMailItem = new FoodItem(destinationFloor,arrivalTime,weight);
+            } else {
+                newMailItem = new RegularItem(destinationFloor,arrivalTime,weight);
+            }
         } else {
         	newMailItem = new PriorityMailItem(destinationFloor,arrivalTime,weight,priorityLevel);
         }

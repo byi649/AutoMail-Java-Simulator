@@ -1,3 +1,4 @@
+// Group 7
 package automail;
 
 import java.util.Map;
@@ -8,7 +9,7 @@ import java.util.TreeMap;
 /**
  * Represents a mail item
  */
-public class MailItem {
+public abstract class MailItem {
 	
     /** Represents the destination floor to which the mail is intended to go */
     protected final int destination_floor;
